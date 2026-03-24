@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { fixLeafletIcons } from '@/lib/leaflet-icon-fix';
 
 // Dynamically import map components to avoid SSR issues
 const MapContainer = dynamic(
@@ -47,6 +48,7 @@ export default function RadarMap({ lat, lon, cityName }: Props) {
 
   useEffect(() => {
     setMounted(true);
+    fixLeafletIcons(); // Fix marker icons
     fetchRadarData();
     
     // Update radar data every 10 minutes
