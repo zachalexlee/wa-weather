@@ -182,16 +182,10 @@ export default function RadarMap({ lat, lon, cityName }: Props) {
           scrollWheelZoom={true}
           zoomControl={true}
         >
-          {/* Base Map Layer - Clean Dark Style */}
+          {/* Base Map Layer - Classic OpenStreetMap Style */}
           <TileLayer
-            attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
-            maxZoom={12}
-          />
-          
-          {/* Street Labels Layer */}
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             maxZoom={12}
           />
 
