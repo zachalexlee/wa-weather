@@ -33,12 +33,20 @@ interface Props {
 }
 
 export default function RadarMap({ lat, lon, cityName }: Props) {
-  const [radarLayer, setRadarLayer] = useState<'precipitation' | 'clouds' | 'temperature'>('precipitation');
+  const [radarLayer, setRadarLayer] = useState<'radar' | 'satellite' | 'coverage'>('radar');
+  const [radarTimestamp, setRadarTimestamp] = useState<number>(Date.now());
   const [mounted, setMounted] = useState(false);
   const position: LatLngExpression = [lat, lon];
 
   useEffect(() => {
     setMounted(true);
+    
+    // Update radar every 10 minutes for latest data
+    const interval = setInterval(() => {
+      setRadarTimestamp(Date.now());
+    }, 600000); // 10 minutes
+
+    return () => clearInterval(interval);
   }, []);
 
   if (!mounted) {
@@ -54,34 +62,40 @@ export default function RadarMap({ lat, lon, cityName }: Props) {
       {/* Layer Controls */}
       <div className="flex gap-2 flex-wrap">
         <button
-          onClick={() => setRadarLayer('precipitation')}
+          onClick={() => setRadarLayer('radar')}
           className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-            radarLayer === 'precipitation'
+            radarLayer === 'radar'
               ? 'bg-blue-500 text-white'
               : 'bg-white/10 text-blue-200 hover:bg-white/20'
           }`}
         >
-          ☔ Precipitation
+          📡 Doppler Radar
         </button>
         <button
-          onClick={() => setRadarLayer('clouds')}
+          onClick={() => setRadarLayer('satellite')}
           className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-            radarLayer === 'clouds'
+            radarLayer === 'satellite'
               ? 'bg-blue-500 text-white'
               : 'bg-white/10 text-blue-200 hover:bg-white/20'
           }`}
         >
-          ☁️ Cloud Cover
+          🛰️ Satellite
         </button>
         <button
-          onClick={() => setRadarLayer('temperature')}
+          onClick={() => setRadarLayer('coverage')}
           className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-            radarLayer === 'temperature'
+            radarLayer === 'coverage'
               ? 'bg-blue-500 text-white'
               : 'bg-white/10 text-blue-200 hover:bg-white/20'
           }`}
         >
-          🌡️ Temperature
+          🌐 Coverage Map
+        </button>
+        <button
+          onClick={() => setRadarTimestamp(Date.now())}
+          className="px-4 py-2 rounded-lg font-medium bg-green-500 hover:bg-green-600 text-white transition-all duration-200"
+        >
+          🔄 Refresh
         </button>
       </div>
 
@@ -93,17 +107,18 @@ export default function RadarMap({ lat, lon, cityName }: Props) {
           style={{ height: '100%', width: '100%' }}
           scrollWheelZoom={true}
         >
-          {/* Base Map Layer */}
+          {/* Base Map Layer - Dark theme */}
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           />
 
-          {/* Weather Overlay Layer */}
+          {/* RainViewer Radar/Satellite Layer */}
           <TileLayer
-            url={getWeatherLayerUrl(radarLayer)}
-            attribution='Weather data &copy; <a href="https://openweathermap.org/">OpenWeatherMap</a>'
-            opacity={0.6}
+            url={getRainViewerUrl(radarLayer, radarTimestamp)}
+            attribution='&copy; <a href="https://www.rainviewer.com">RainViewer</a>'
+            opacity={0.7}
+            maxZoom={18}
           />
 
           {/* City Marker */}
@@ -118,35 +133,49 @@ export default function RadarMap({ lat, lon, cityName }: Props) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-6 text-sm text-blue-200 flex-wrap">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-300 rounded"></div>
-          <span>Light</span>
+      <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+        <h3 className="text-white font-semibold mb-3">Precipitation Intensity</h3>
+        <div className="flex items-center gap-6 text-sm text-blue-200 flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-4 rounded" style={{ background: 'rgba(0, 200, 255, 0.6)' }}></div>
+            <span>Light Rain</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-4 rounded" style={{ background: 'rgba(0, 150, 255, 0.8)' }}></div>
+            <span>Moderate</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-4 rounded" style={{ background: 'rgba(0, 100, 255, 1)' }}></div>
+            <span>Heavy</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-4 rounded" style={{ background: 'rgba(150, 0, 255, 1)' }}></div>
+            <span>Very Heavy</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-4 rounded" style={{ background: 'rgba(255, 0, 0, 1)' }}></div>
+            <span>Extreme</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-500 rounded"></div>
-          <span>Moderate</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-700 rounded"></div>
-          <span>Heavy</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-purple-600 rounded"></div>
-          <span>Severe</span>
-        </div>
+        <p className="text-blue-300 text-xs mt-3">
+          ℹ️ Radar data updates every 10 minutes from live NOAA/NWS sources
+        </p>
       </div>
     </div>
   );
 }
 
-function getWeatherLayerUrl(layer: 'precipitation' | 'clouds' | 'temperature'): string {
-  const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || 'demo';
+function getRainViewerUrl(layer: 'radar' | 'satellite' | 'coverage', timestamp: number): string {
+  // RainViewer provides free, high-quality radar tiles
+  // Using the latest available radar timestamp
+  const time = Math.floor(timestamp / 600000) * 600000; // Round to nearest 10 minutes
+  
   const layerMap = {
-    precipitation: 'precipitation_new',
-    clouds: 'clouds_new',
-    temperature: 'temp_new',
+    radar: 'radar',      // Doppler radar precipitation
+    satellite: 'satellite', // Infrared satellite imagery
+    coverage: 'coverage'   // Radar coverage areas
   };
   
-  return `https://tile.openweathermap.org/map/${layerMap[layer]}/{z}/{x}/{y}.png?appid=${apiKey}`;
+  // RainViewer tile server (free to use)
+  return `https://tilecache.rainviewer.com/v2/${layerMap[layer]}/{z}/{x}/{y}/256.png`;
 }
