@@ -7,6 +7,7 @@ import { getCurrentWeather, get10DayForecast, type CurrentWeather, type DailyFor
 import CurrentWeatherCard from '@/components/CurrentWeatherCard';
 import ForecastList from '@/components/ForecastList';
 import RadarMap from '@/components/RadarMap';
+import WeatherAlerts from '@/components/WeatherAlerts';
 
 export default function Home() {
   const [selectedCity, setSelectedCity] = useState<City>(washingtonCities[0]); // Default to Seattle
@@ -82,6 +83,19 @@ export default function Home() {
           </div>
         ) : (
           <div className="space-y-8">
+            {/* Weather Alerts */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <WeatherAlerts 
+                lat={selectedCity.lat} 
+                lon={selectedCity.lon}
+                cityName={selectedCity.name}
+              />
+            </motion.div>
+
             {/* Current Weather */}
             {currentWeather && (
               <motion.div
