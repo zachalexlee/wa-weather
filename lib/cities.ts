@@ -1,0 +1,30 @@
+// Major Washington State cities with coordinates
+export const washingtonCities = [
+  { name: 'Seattle', lat: 47.6062, lon: -122.3321, region: 'Puget Sound' },
+  { name: 'Spokane', lat: 47.6588, lon: -117.4260, region: 'Eastern WA' },
+  { name: 'Tacoma', lat: 47.2529, lon: -122.4443, region: 'Puget Sound' },
+  { name: 'Vancouver', lat: 45.6387, lon: -122.6615, region: 'Southwest WA' },
+  { name: 'Bellevue', lat: 47.6101, lon: -122.2015, region: 'Puget Sound' },
+  { name: 'Everett', lat: 47.9790, lon: -122.2021, region: 'Puget Sound' },
+  { name: 'Kent', lat: 47.3809, lon: -122.2348, region: 'Puget Sound' },
+  { name: 'Yakima', lat: 46.6021, lon: -120.5059, region: 'Central WA' },
+  { name: 'Renton', lat: 47.4829, lon: -122.2171, region: 'Puget Sound' },
+  { name: 'Spokane Valley', lat: 47.6732, lon: -117.2394, region: 'Eastern WA' },
+  { name: 'Federal Way', lat: 47.3223, lon: -122.3126, region: 'Puget Sound' },
+  { name: 'Bellingham', lat: 48.7519, lon: -122.4787, region: 'Northwest WA' },
+  { name: 'Kennewick', lat: 46.2112, lon: -119.1372, region: 'Tri-Cities' },
+  { name: 'Auburn', lat: 47.3073, lon: -122.2285, region: 'Puget Sound' },
+  { name: 'Pasco', lat: 46.2396, lon: -119.1006, region: 'Tri-Cities' },
+  { name: 'Marysville', lat: 48.0518, lon: -122.1771, region: 'Puget Sound' },
+  { name: 'Lakewood', lat: 47.1717, lon: -122.5185, region: 'Puget Sound' },
+  { name: 'Redmond', lat: 47.6740, lon: -122.1215, region: 'Puget Sound' },
+  { name: 'Shoreline', lat: 47.7557, lon: -122.3415, region: 'Puget Sound' },
+  { name: 'Richland', lat: 46.2856, lon: -119.2844, region: 'Tri-Cities' },
+  { name: 'Kirkland', lat: 47.6815, lon: -122.2087, region: 'Puget Sound' },
+  { name: 'Olympia', lat: 47.0379, lon: -122.9007, region: 'Capitol' },
+  { name: 'Sammamish', lat: 47.6163, lon: -122.0356, region: 'Puget Sound' },
+  { name: 'Pullman', lat: 46.7312, lon: -117.1796, region: 'Southeast WA' },
+  { name: 'Wenatchee', lat: 47.4235, lon: -120.3103, region: 'North Central WA' },
+] as const;
+
+export type City = typeof washingtonCities[number];
