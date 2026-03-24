@@ -32,22 +32,40 @@ interface Props {
   cityName: string;
 }
 
+interface RadarFrame {
+  path: string;
+  time: number;
+}
+
 export default function RadarMap({ lat, lon, cityName }: Props) {
-  const [radarLayer, setRadarLayer] = useState<'radar' | 'satellite' | 'coverage'>('radar');
-  const [radarTimestamp, setRadarTimestamp] = useState<number>(Date.now());
+  const [radarLayer, setRadarLayer] = useState<'precipitation' | 'clouds' | 'temperature'>('precipitation');
+  const [radarFrames, setRadarFrames] = useState<RadarFrame[]>([]);
+  const [currentFrame, setCurrentFrame] = useState(0);
   const [mounted, setMounted] = useState(false);
   const position: LatLngExpression = [lat, lon];
 
   useEffect(() => {
     setMounted(true);
+    fetchRadarData();
     
-    // Update radar every 10 minutes for latest data
-    const interval = setInterval(() => {
-      setRadarTimestamp(Date.now());
-    }, 600000); // 10 minutes
-
+    // Update radar data every 10 minutes
+    const interval = setInterval(fetchRadarData, 600000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchRadarData = async () => {
+    try {
+      const response = await fetch('https://api.rainviewer.com/public/weather-maps.json');
+      const data = await response.json();
+      
+      if (data.radar && data.radar.past) {
+        setRadarFrames(data.radar.past);
+        setCurrentFrame(data.radar.past.length - 1); // Use latest frame
+      }
+    } catch (error) {
+      console.error('Error fetching radar data:', error);
+    }
+  };
 
   if (!mounted) {
     return (
@@ -57,42 +75,46 @@ export default function RadarMap({ lat, lon, cityName }: Props) {
     );
   }
 
+  const radarTileUrl = radarFrames[currentFrame]
+    ? `https://tilecache.rainviewer.com${radarFrames[currentFrame].path}/256/{z}/{x}/{y}/2/1_1.png`
+    : '';
+
   return (
     <div className="space-y-4">
       {/* Layer Controls */}
       <div className="flex gap-2 flex-wrap">
         <button
-          onClick={() => setRadarLayer('radar')}
+          onClick={() => setRadarLayer('precipitation')}
           className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-            radarLayer === 'radar'
+            radarLayer === 'precipitation'
               ? 'bg-blue-500 text-white'
               : 'bg-white/10 text-blue-200 hover:bg-white/20'
           }`}
         >
-          📡 Doppler Radar
+          ☔ Live Radar
         </button>
         <button
-          onClick={() => setRadarLayer('satellite')}
+          onClick={() => setRadarLayer('clouds')}
           className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-            radarLayer === 'satellite'
+            radarLayer === 'clouds'
               ? 'bg-blue-500 text-white'
               : 'bg-white/10 text-blue-200 hover:bg-white/20'
           }`}
         >
-          🛰️ Satellite
+          ☁️ Cloud Cover
         </button>
         <button
-          onClick={() => setRadarLayer('coverage')}
+          onClick={() => setRadarLayer('temperature')}
           className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-            radarLayer === 'coverage'
+            radarLayer === 'temperature'
               ? 'bg-blue-500 text-white'
               : 'bg-white/10 text-blue-200 hover:bg-white/20'
           }`}
         >
-          🌐 Coverage Map
+          🌡️ Temperature
         </button>
         <button
-          onClick={() => setRadarTimestamp(Date.now())}
+          onClick={fetchRadarData}
           className="px-4 py-2 rounded-lg font-medium bg-green-500 hover:bg-green-600 text-white transition-all duration-200"
         >
           🔄 Refresh
@@ -103,23 +125,32 @@ export default function RadarMap({ lat, lon, cityName }: Props) {
       <div className="w-full h-[500px] rounded-xl overflow-hidden border-2 border-white/20">
         <MapContainer
           center={position}
-          zoom={9}
+          zoom={8}
           style={{ height: '100%', width: '100%' }}
           scrollWheelZoom={true}
         >
-          {/* Base Map Layer - Dark theme */}
+          {/* Base Map Layer */}
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
-          {/* RainViewer Radar/Satellite Layer */}
-          <TileLayer
-            url={getRainViewerUrl(radarLayer, radarTimestamp)}
-            attribution='&copy; <a href="https://www.rainviewer.com">RainViewer</a>'
-            opacity={0.7}
-            maxZoom={18}
-          />
+          {/* Weather Overlay Layer */}
+          {radarLayer === 'precipitation' && radarTileUrl ? (
+            <TileLayer
+              url={radarTileUrl}
+              attribution='&copy; <a href="https://www.rainviewer.com">RainViewer</a>'
+              opacity={0.6}
+              zIndex={10}
+            />
+          ) : (
+            <TileLayer
+              url={getOpenWeatherLayerUrl(radarLayer)}
+              attribution='Weather data &copy; <a href="https://openweathermap.org/">OpenWeatherMap</a>'
+              opacity={0.5}
+              zIndex={10}
+            />
+          )}
 
           {/* City Marker */}
           <Marker position={position}>
@@ -134,48 +165,50 @@ export default function RadarMap({ lat, lon, cityName }: Props) {
 
       {/* Legend */}
       <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
-        <h3 className="text-white font-semibold mb-3">Precipitation Intensity</h3>
-        <div className="flex items-center gap-6 text-sm text-blue-200 flex-wrap">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-4 rounded" style={{ background: 'rgba(0, 200, 255, 0.6)' }}></div>
-            <span>Light Rain</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-4 rounded" style={{ background: 'rgba(0, 150, 255, 0.8)' }}></div>
-            <span>Moderate</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-4 rounded" style={{ background: 'rgba(0, 100, 255, 1)' }}></div>
-            <span>Heavy</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-4 rounded" style={{ background: 'rgba(150, 0, 255, 1)' }}></div>
-            <span>Very Heavy</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-4 rounded" style={{ background: 'rgba(255, 0, 0, 1)' }}></div>
-            <span>Extreme</span>
-          </div>
-        </div>
-        <p className="text-blue-300 text-xs mt-3">
-          ℹ️ Radar data updates every 10 minutes from live NOAA/NWS sources
-        </p>
+        <h3 className="text-white font-semibold mb-3">
+          {radarLayer === 'precipitation' ? 'Precipitation Intensity' : 'Layer Information'}
+        </h3>
+        {radarLayer === 'precipitation' ? (
+          <>
+            <div className="flex items-center gap-4 text-sm text-blue-200 flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-4 rounded" style={{ background: 'rgba(100, 200, 255, 0.8)' }}></div>
+                <span>Light</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-4 rounded" style={{ background: 'rgba(0, 150, 255, 1)' }}></div>
+                <span>Moderate</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-4 rounded" style={{ background: 'rgba(255, 200, 0, 1)' }}></div>
+                <span>Heavy</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-4 rounded" style={{ background: 'rgba(255, 0, 0, 1)' }}></div>
+                <span>Extreme</span>
+              </div>
+            </div>
+            <p className="text-blue-300 text-xs mt-3">
+              ℹ️ Live radar data from NOAA/NWS sources via RainViewer
+            </p>
+          </>
+        ) : (
+          <p className="text-blue-200 text-sm">
+            Showing {radarLayer} data for {cityName} area
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
-function getRainViewerUrl(layer: 'radar' | 'satellite' | 'coverage', timestamp: number): string {
-  // RainViewer provides free, high-quality radar tiles
-  // Using the latest available radar timestamp
-  const time = Math.floor(timestamp / 600000) * 600000; // Round to nearest 10 minutes
-  
+function getOpenWeatherLayerUrl(layer: 'precipitation' | 'clouds' | 'temperature'): string {
+  const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || '2da56c3b5f37ea8efa1783a594ef791f';
   const layerMap = {
-    radar: 'radar',      // Doppler radar precipitation
-    satellite: 'satellite', // Infrared satellite imagery
-    coverage: 'coverage'   // Radar coverage areas
+    precipitation: 'precipitation_new',
+    clouds: 'clouds_new',
+    temperature: 'temp_new',
   };
   
-  // RainViewer tile server (free to use)
-  return `https://tilecache.rainviewer.com/v2/${layerMap[layer]}/{z}/{x}/{y}/256.png`;
+  return `https://tile.openweathermap.org/map/${layerMap[layer]}/{z}/{x}/{y}.png?appid=${apiKey}`;
 }
