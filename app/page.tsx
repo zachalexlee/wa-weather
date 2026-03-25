@@ -297,7 +297,7 @@ export default function Home() {
                   <h2 className={`text-2xl font-bold ${textPrimary} mb-4`}>
                     📅 10-Day Forecast
                   </h2>
-                  <ForecastList forecast={forecast} />
+                  <ForecastList forecast={forecast} theme={theme} />
                 </div>
               </motion.div>
             )}
