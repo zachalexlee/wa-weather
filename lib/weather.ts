@@ -38,6 +38,22 @@ export interface DailyForecast {
   icon: string;
 }
 
+export interface HourlyForecast {
+  dt: number;
+  temp: number;
+  feels_like: number;
+  pressure: number;
+  humidity: number;
+  clouds: number;
+  wind_speed: number;
+  wind_deg: number;
+  pop: number; // Probability of precipitation
+  rain?: number;
+  snow?: number;
+  description: string;
+  icon: string;
+}
+
 const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY || 'demo';
 const BASE_URL = 'https://api.openweathermap.org/data/2.5';
 
@@ -74,6 +90,44 @@ export async function getCurrentWeather(
     };
   } catch (error) {
     console.error('Error fetching current weather:', error);
+    return null;
+  }
+}
+
+export async function getHourlyForecast(
+  lat: number,
+  lon: number
+): Promise<HourlyForecast[] | null> {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/forecast?lat=${lat}&lon=${lon}&units=imperial&appid=${API_KEY}`
+    );
+    
+    if (!response.ok) throw new Error('Hourly forecast fetch failed');
+    
+    const data = await response.json();
+    
+    // OpenWeatherMap 5-day forecast gives us 3-hour intervals
+    // Take first 16 entries (48 hours)
+    const hourlyForecasts: HourlyForecast[] = data.list.slice(0, 16).map((item: any) => ({
+      dt: item.dt,
+      temp: item.main.temp,
+      feels_like: item.main.feels_like,
+      pressure: item.main.pressure,
+      humidity: item.main.humidity,
+      clouds: item.clouds.all,
+      wind_speed: item.wind.speed,
+      wind_deg: item.wind.deg,
+      pop: item.pop || 0,
+      rain: item.rain?.['3h'],
+      snow: item.snow?.['3h'],
+      description: item.weather[0].description,
+      icon: item.weather[0].icon,
+    }));
+    
+    return hourlyForecasts;
+  } catch (error) {
+    console.error('Error fetching hourly forecast:', error);
     return null;
   }
 }

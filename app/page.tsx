@@ -3,15 +3,17 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { washingtonCities, type City } from '@/lib/cities';
-import { getCurrentWeather, get10DayForecast, type CurrentWeather, type DailyForecast } from '@/lib/weather';
+import { getCurrentWeather, get10DayForecast, getHourlyForecast, type CurrentWeather, type DailyForecast, type HourlyForecast } from '@/lib/weather';
 import CurrentWeatherCard from '@/components/CurrentWeatherCard';
 import ForecastList from '@/components/ForecastList';
+import HourlyForecastComponent from '@/components/HourlyForecast';
 import RadarMap from '@/components/RadarMap';
 import WeatherAlerts from '@/components/WeatherAlerts';
 
 export default function Home() {
   const [selectedCity, setSelectedCity] = useState<City>(washingtonCities[0]); // Default to Seattle
   const [currentWeather, setCurrentWeather] = useState<CurrentWeather | null>(null);
+  const [hourlyForecast, setHourlyForecast] = useState<HourlyForecast[] | null>(null);
   const [forecast, setForecast] = useState<DailyForecast[] | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,12 +21,14 @@ export default function Home() {
     async function fetchWeather() {
       setLoading(true);
       
-      const [current, daily] = await Promise.all([
+      const [current, hourly, daily] = await Promise.all([
         getCurrentWeather(selectedCity.lat, selectedCity.lon),
+        getHourlyForecast(selectedCity.lat, selectedCity.lon),
         get10DayForecast(selectedCity.lat, selectedCity.lon),
       ]);
       
       setCurrentWeather(current);
+      setHourlyForecast(hourly);
       setForecast(daily);
       setLoading(false);
     }
@@ -111,11 +115,22 @@ export default function Home() {
               </motion.div>
             )}
 
+            {/* Hourly Forecast */}
+            {hourlyForecast && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+              >
+                <HourlyForecastComponent forecast={hourlyForecast} />
+              </motion.div>
+            )}
+
             {/* Radar Map */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             >
               <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-6">
                 <h2 className="text-2xl font-bold text-white mb-4">
@@ -134,7 +149,7 @@ export default function Home() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
               >
                 <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-6">
                   <h2 className="text-2xl font-bold text-white mb-4">
