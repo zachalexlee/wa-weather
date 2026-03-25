@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { washingtonCities, type City } from '@/lib/cities';
 import { getCurrentWeather, get10DayForecast, getHourlyForecast, type CurrentWeather, type DailyForecast, type HourlyForecast } from '@/lib/weather';
+import { useTheme } from '@/lib/theme-context';
 import CurrentWeatherCard from '@/components/CurrentWeatherCard';
 import ForecastList from '@/components/ForecastList';
 import HourlyForecastComponent from '@/components/HourlyForecast';
@@ -11,11 +12,72 @@ import RadarMap from '@/components/RadarMap';
 import WeatherAlerts from '@/components/WeatherAlerts';
 
 export default function Home() {
+  const { theme, toggleTheme } = useTheme();
   const [selectedCity, setSelectedCity] = useState<City>(washingtonCities[0]); // Default to Seattle
   const [currentWeather, setCurrentWeather] = useState<CurrentWeather | null>(null);
   const [hourlyForecast, setHourlyForecast] = useState<HourlyForecast[] | null>(null);
   const [forecast, setForecast] = useState<DailyForecast[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [favoriteCities, setFavoriteCities] = useState<string[]>([]);
+  const [detectingLocation, setDetectingLocation] = useState(false);
+
+  // Load favorites from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('favoriteCities');
+    if (saved) {
+      try {
+        setFavoriteCities(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to load favorites:', e);
+      }
+    }
+  }, []);
+
+  // Save favorites to localStorage
+  const toggleFavorite = (cityName: string) => {
+    const newFavorites = favoriteCities.includes(cityName)
+      ? favoriteCities.filter(c => c !== cityName)
+      : [...favoriteCities, cityName];
+    setFavoriteCities(newFavorites);
+    localStorage.setItem('favoriteCities', JSON.stringify(newFavorites));
+  };
+
+  // Detect user location
+  const detectLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        
+        // Find closest Washington city
+        let closestCity: City = washingtonCities[0];
+        let minDistance = Infinity;
+        
+        washingtonCities.forEach((city) => {
+          const distance = Math.sqrt(
+            Math.pow(city.lat - latitude, 2) + Math.pow(city.lon - longitude, 2)
+          );
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestCity = city as City;
+          }
+        });
+        
+        setSelectedCity(closestCity);
+        setDetectingLocation(false);
+      },
+      (error) => {
+        console.error('Location detection failed:', error);
+        alert('Could not detect your location. Please select a city manually.');
+        setDetectingLocation(false);
+      }
+    );
+  };
 
   useEffect(() => {
     async function fetchWeather() {
@@ -36,41 +98,115 @@ export default function Home() {
     fetchWeather();
   }, [selectedCity]);
 
+  const bgClass = theme === 'dark'
+    ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900'
+    : 'bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300';
+
+  const headerBg = theme === 'dark' ? 'bg-black/20' : 'bg-white/90';
+  const textPrimary = theme === 'dark' ? 'text-white' : 'text-blue-900';
+  const textSecondary = theme === 'dark' ? 'text-blue-200' : 'text-blue-700';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900">
+    <div className={`min-h-screen ${bgClass}`}>
       {/* Header */}
-      <header className="bg-black/20 backdrop-blur-md border-b border-white/10">
+      <header className={`${headerBg} backdrop-blur-md border-b ${theme === 'dark' ? 'border-white/10' : 'border-blue-300'}`}>
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">
+              <h1 className={`text-4xl font-bold ${textPrimary} mb-2`}>
                 ☀️ Washington Weather Hub
               </h1>
-              <p className="text-blue-200">
+              <p className={textSecondary}>
                 Real-time weather, radar, and forecasts for Washington State
               </p>
             </div>
             
-            {/* City Selector */}
-            <div className="flex items-center gap-3">
-              <label htmlFor="city-select" className="text-white font-medium">
-                📍 Location:
-              </label>
-              <select
-                id="city-select"
-                value={selectedCity.name}
-                onChange={(e) => {
-                  const city = washingtonCities.find(c => c.name === e.target.value);
-                  if (city) setSelectedCity(city);
-                }}
-                className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+            {/* Controls */}
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  theme === 'dark'
+                    ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+                title="Toggle dark/light mode"
               >
-                {washingtonCities.map((city) => (
-                  <option key={city.name} value={city.name} className="bg-blue-900">
-                    {city.name} ({city.region})
-                  </option>
-                ))}
-              </select>
+                {theme === 'dark' ? '☀️' : '🌙'}
+              </button>
+
+              {/* Geolocation Button */}
+              <button
+                onClick={detectLocation}
+                disabled={detectingLocation}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  theme === 'dark'
+                    ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                title="Detect my location"
+              >
+                {detectingLocation ? '🔄' : '📍'}
+              </button>
+
+              {/* Favorite Toggle */}
+              <button
+                onClick={() => toggleFavorite(selectedCity.name)}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  favoriteCities.includes(selectedCity.name)
+                    ? theme === 'dark'
+                      ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/50'
+                      : 'bg-yellow-400 text-yellow-900 border border-yellow-600'
+                    : theme === 'dark'
+                      ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+                title={favoriteCities.includes(selectedCity.name) ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                {favoriteCities.includes(selectedCity.name) ? '⭐' : '☆'}
+              </button>
+
+              {/* City Selector */}
+              <div className="flex items-center gap-3">
+                <label htmlFor="city-select" className={`${textPrimary} font-medium`}>
+                  📍 Location:
+                </label>
+                <select
+                  id="city-select"
+                  value={selectedCity.name}
+                  onChange={(e) => {
+                    const city = washingtonCities.find(c => c.name === e.target.value);
+                    if (city) setSelectedCity(city);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer ${
+                    theme === 'dark'
+                      ? 'bg-white/10 backdrop-blur-md border border-white/20 text-white'
+                      : 'bg-white border border-blue-300 text-blue-900'
+                  }`}
+                >
+                  {/* Favorites Section */}
+                  {favoriteCities.length > 0 && (
+                    <optgroup label="⭐ Favorites">
+                      {washingtonCities
+                        .filter(city => favoriteCities.includes(city.name))
+                        .map((city) => (
+                          <option key={`fav-${city.name}`} value={city.name} className={theme === 'dark' ? 'bg-blue-900' : 'bg-white'}>
+                            {city.name} ({city.region})
+                          </option>
+                        ))}
+                    </optgroup>
+                  )}
+                  {/* All Cities */}
+                  <optgroup label="All Cities">
+                    {washingtonCities.map((city) => (
+                      <option key={city.name} value={city.name} className={theme === 'dark' ? 'bg-blue-900' : 'bg-white'}>
+                        {city.name} ({city.region})
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -82,7 +218,7 @@ export default function Home() {
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-400 mb-4"></div>
-              <p className="text-white text-xl">Loading weather data...</p>
+              <p className={`${textPrimary} text-xl`}>Loading weather data...</p>
             </div>
           </div>
         ) : (
@@ -132,8 +268,12 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-6">
-                <h2 className="text-2xl font-bold text-white mb-4">
+              <div className={`backdrop-blur-md rounded-2xl border p-6 ${
+                theme === 'dark' 
+                  ? 'bg-white/10 border-white/20' 
+                  : 'bg-white/80 border-blue-300'
+              }`}>
+                <h2 className={`text-2xl font-bold ${textPrimary} mb-4`}>
                   🗺️ Live Doppler Radar
                 </h2>
                 <RadarMap 
@@ -151,8 +291,12 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-6">
-                  <h2 className="text-2xl font-bold text-white mb-4">
+                <div className={`backdrop-blur-md rounded-2xl border p-6 ${
+                  theme === 'dark' 
+                    ? 'bg-white/10 border-white/20' 
+                    : 'bg-white/80 border-blue-300'
+                }`}>
+                  <h2 className={`text-2xl font-bold ${textPrimary} mb-4`}>
                     📅 10-Day Forecast
                   </h2>
                   <ForecastList forecast={forecast} />
@@ -164,13 +308,13 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-black/20 backdrop-blur-md border-t border-white/10 mt-12">
+      <footer className={`${headerBg} backdrop-blur-md border-t ${theme === 'dark' ? 'border-white/10' : 'border-blue-300'} mt-12`}>
         <div className="max-w-7xl mx-auto px-4 py-6 text-center">
-          <p className="text-blue-200">
+          <p className={textSecondary}>
             Washington Weather Hub • Real-time weather data for the Evergreen State
           </p>
-          <p className="text-blue-300 text-sm mt-2">
-            Data powered by OpenWeatherMap & RainViewer
+          <p className={`${textSecondary} text-sm mt-2`}>
+            Data powered by OpenWeatherMap, Open-Meteo & RainViewer
           </p>
         </div>
       </footer>

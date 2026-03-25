@@ -1,4 +1,4 @@
-import { type CurrentWeather, getWeatherIconUrl, formatTemp, formatWindDirection } from '@/lib/weather';
+import { type CurrentWeather, getWeatherIconUrl, formatTemp, formatWindDirection, getUVLabel } from '@/lib/weather';
 
 interface Props {
   weather: CurrentWeather;
@@ -83,6 +83,21 @@ export default function CurrentWeatherCard({ weather, cityName, region }: Props)
             label="Cloud Cover"
             value={`${weather.clouds}%`}
           />
+          {weather.uv_index !== undefined && (
+            <WeatherDetail
+              icon="☀️"
+              label="UV Index"
+              value={`${weather.uv_index.toFixed(1)} (${getUVLabel(weather.uv_index)})`}
+            />
+          )}
+          {weather.aqi !== undefined && (
+            <WeatherDetail
+              icon="🌫️"
+              label="Air Quality"
+              value={`${weather.aqi} (${weather.aqi_label})`}
+              color={getAQIColor(weather.aqi)}
+            />
+          )}
           <WeatherDetail
             icon="👁️"
             label="Visibility"
@@ -109,14 +124,23 @@ export default function CurrentWeatherCard({ weather, cityName, region }: Props)
   );
 }
 
-function WeatherDetail({ icon, label, value }: { icon: string; label: string; value: string }) {
+function WeatherDetail({ icon, label, value, color }: { icon: string; label: string; value: string; color?: string }) {
   return (
     <div className="bg-white/10 rounded-lg p-4 border border-white/10">
       <div className="flex items-center gap-2 mb-1">
         <span className="text-2xl">{icon}</span>
         <span className="text-blue-200 text-sm font-medium">{label}</span>
       </div>
-      <div className="text-white text-lg font-semibold">{value}</div>
+      <div className="text-white text-lg font-semibold" style={color ? { color } : undefined}>{value}</div>
     </div>
   );
+}
+
+function getAQIColor(aqi: number): string {
+  if (aqi <= 50) return '#00e400'; // Good - Green
+  if (aqi <= 100) return '#ffff00'; // Moderate - Yellow
+  if (aqi <= 150) return '#ff7e00'; // Unhealthy for Sensitive - Orange
+  if (aqi <= 200) return '#ff0000'; // Unhealthy - Red
+  if (aqi <= 300) return '#8f3f97'; // Very Unhealthy - Purple
+  return '#7e0023'; // Hazardous - Maroon
 }

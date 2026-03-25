@@ -18,6 +18,9 @@ export interface CurrentWeather {
   sunrise: number;
   sunset: number;
   dt: number;
+  uv_index?: number;
+  aqi?: number;
+  aqi_label?: string;
 }
 
 export interface DailyForecast {
@@ -62,37 +65,78 @@ export async function getCurrentWeather(
   lon: number
 ): Promise<CurrentWeather | null> {
   try {
-    const response = await fetch(
+    // Fetch basic weather from OpenWeatherMap
+    const weatherResponse = await fetch(
       `${BASE_URL}/weather?lat=${lat}&lon=${lon}&units=imperial&appid=${API_KEY}`
     );
     
-    if (!response.ok) throw new Error('Weather fetch failed');
+    if (!weatherResponse.ok) throw new Error('Weather fetch failed');
     
-    const data = await response.json();
+    const weatherData = await weatherResponse.json();
+    
+    // Fetch UV index and AQI from Open-Meteo (free, no key needed)
+    const airQualityResponse = await fetch(
+      `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,uv_index&timezone=auto`
+    );
+    
+    let uvIndex = undefined;
+    let aqi = undefined;
+    let aqiLabel = undefined;
+    
+    if (airQualityResponse.ok) {
+      const airQualityData = await airQualityResponse.json();
+      uvIndex = airQualityData.current?.uv_index;
+      aqi = airQualityData.current?.us_aqi;
+      aqiLabel = getAQILabel(aqi);
+    }
     
     return {
-      temp: data.main.temp,
-      feels_like: data.main.feels_like,
-      temp_min: data.main.temp_min,
-      temp_max: data.main.temp_max,
-      pressure: data.main.pressure,
-      humidity: data.main.humidity,
-      visibility: data.visibility,
-      wind_speed: data.wind.speed,
-      wind_deg: data.wind.deg,
-      wind_gust: data.wind.gust,
-      clouds: data.clouds.all,
-      description: data.weather[0].description,
-      icon: data.weather[0].icon,
-      sunrise: data.sys.sunrise,
-      sunset: data.sys.sunset,
-      dt: data.dt,
+      temp: weatherData.main.temp,
+      feels_like: weatherData.main.feels_like,
+      temp_min: weatherData.main.temp_min,
+      temp_max: weatherData.main.temp_max,
+      pressure: weatherData.main.pressure,
+      humidity: weatherData.main.humidity,
+      visibility: weatherData.visibility,
+      wind_speed: weatherData.wind.speed,
+      wind_deg: weatherData.wind.deg,
+      wind_gust: weatherData.wind.gust,
+      clouds: weatherData.clouds.all,
+      description: weatherData.weather[0].description,
+      icon: weatherData.weather[0].icon,
+      sunrise: weatherData.sys.sunrise,
+      sunset: weatherData.sys.sunset,
+      dt: weatherData.dt,
+      uv_index: uvIndex,
+      aqi: aqi,
+      aqi_label: aqiLabel,
     };
   } catch (error) {
     console.error('Error fetching current weather:', error);
     return null;
   }
 }
+
+function getAQILabel(aqi: number | undefined): string | undefined {
+  if (aqi === undefined) return undefined;
+  if (aqi <= 50) return 'Good';
+  if (aqi <= 100) return 'Moderate';
+  if (aqi <= 150) return 'Unhealthy for Sensitive Groups';
+  if (aqi <= 200) return 'Unhealthy';
+  if (aqi <= 300) return 'Very Unhealthy';
+  return 'Hazardous';
+}
+
+function getUVLabel(uv: number | undefined): string | undefined {
+  if (uv === undefined) return undefined;
+  if (uv < 3) return 'Low';
+  if (uv < 6) return 'Moderate';
+  if (uv < 8) return 'High';
+  if (uv < 11) return 'Very High';
+  return 'Extreme';
+}
+
+export { getUVLabel };
 
 export async function getHourlyForecast(
   lat: number,
