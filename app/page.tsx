@@ -10,6 +10,8 @@ import ForecastList from '@/components/ForecastList';
 import HourlyForecastComponent from '@/components/HourlyForecast';
 import RadarMap from '@/components/RadarMap';
 import WeatherAlerts from '@/components/WeatherAlerts';
+import CitySearch from '@/components/CitySearch';
+import WeatherSummary from '@/components/WeatherSummary';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -167,45 +169,13 @@ export default function Home() {
                 {favoriteCities.includes(selectedCity.name) ? '⭐' : '☆'}
               </button>
 
-              {/* City Selector */}
-              <div className="flex items-center gap-3">
-                <label htmlFor="city-select" className={`${textPrimary} font-medium`}>
-                  📍 Location:
-                </label>
-                <select
-                  id="city-select"
-                  value={selectedCity.name}
-                  onChange={(e) => {
-                    const city = washingtonCities.find(c => c.name === e.target.value);
-                    if (city) setSelectedCity(city);
-                  }}
-                  className={`px-4 py-2 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer ${
-                    theme === 'dark'
-                      ? 'bg-white/10 backdrop-blur-md border border-white/20 text-white'
-                      : 'bg-white border border-blue-300 text-blue-900'
-                  }`}
-                >
-                  {/* Favorites Section */}
-                  {favoriteCities.length > 0 && (
-                    <optgroup label="⭐ Favorites">
-                      {washingtonCities
-                        .filter(city => favoriteCities.includes(city.name))
-                        .map((city) => (
-                          <option key={`fav-${city.name}`} value={city.name} className={theme === 'dark' ? 'bg-blue-900' : 'bg-white'}>
-                            {city.name} ({city.region})
-                          </option>
-                        ))}
-                    </optgroup>
-                  )}
-                  {/* All Cities */}
-                  <optgroup label="All Cities">
-                    {washingtonCities.map((city) => (
-                      <option key={city.name} value={city.name} className={theme === 'dark' ? 'bg-blue-900' : 'bg-white'}>
-                        {city.name} ({city.region})
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
+              {/* City Search */}
+              <div className="w-64">
+                <CitySearch 
+                  selectedCity={selectedCity}
+                  onCitySelect={setSelectedCity}
+                  theme={theme}
+                />
               </div>
             </div>
           </div>
@@ -235,6 +205,22 @@ export default function Home() {
                 cityName={selectedCity.name}
               />
             </motion.div>
+
+            {/* Weather Summary Card */}
+            {currentWeather && hourlyForecast && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.05 }}
+              >
+                <WeatherSummary 
+                  current={currentWeather}
+                  hourly={hourlyForecast}
+                  cityName={selectedCity.name}
+                  theme={theme}
+                />
+              </motion.div>
+            )}
 
             {/* Current Weather */}
             {currentWeather && (
