@@ -15,6 +15,9 @@ import WeatherSummary from '@/components/WeatherSummary';
 import WeatherWidgets from '@/components/WeatherWidgets';
 import WeatherGraphs from '@/components/WeatherGraphs';
 import { getWeatherBackground, isNightTime } from '@/lib/weather-backgrounds';
+import WildfireSmoke from '@/components/WildfireSmoke';
+import MountainPasses from '@/components/MountainPasses';
+import PugetSoundMarine from '@/components/PugetSoundMarine';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -329,6 +332,42 @@ export default function Home() {
                 />
               </motion.div>
             )}
+
+            {/* Phase 4: Washington-Specific Features */}
+            
+            {/* Wildfire Smoke Tracker */}
+            {currentWeather && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
+                <WildfireSmoke 
+                  lat={selectedCity.lat}
+                  lon={selectedCity.lon}
+                  cityName={selectedCity.name}
+                  theme={theme}
+                />
+              </motion.div>
+            )}
+
+            {/* Mountain Pass Conditions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
+              <MountainPasses theme={theme} />
+            </motion.div>
+
+            {/* Puget Sound Marine & Ferry Conditions */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.7 }}
+            >
+              <PugetSoundMarine theme={theme} />
+            </motion.div>
           </div>
         )}
       </main>
