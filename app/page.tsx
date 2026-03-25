@@ -20,6 +20,11 @@ import MountainPasses from '@/components/MountainPasses';
 import PugetSoundMarine from '@/components/PugetSoundMarine';
 import NotificationSettings from '@/components/NotificationSettings';
 import YesterdayComparison from '@/components/YesterdayComparison';
+import RadarReplay from '@/components/RadarReplay';
+import ImprovedHourlyForecast from '@/components/ImprovedHourlyForecast';
+import PollenForecast from '@/components/PollenForecast';
+import ActivityRecommendations from '@/components/ActivityRecommendations';
+import SunriseSunset from '@/components/SunriseSunset';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -299,16 +304,70 @@ export default function Home() {
               </motion.div>
             )}
 
-            {/* Hourly Forecast */}
+            {/* Improved Hourly Forecast */}
             {hourlyForecast && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
               >
-                <HourlyForecastComponent forecast={hourlyForecast} theme={theme} />
+                <ImprovedHourlyForecast forecast={hourlyForecast} theme={theme} />
               </motion.div>
             )}
+
+            {/* Sunrise & Sunset with Golden Hour */}
+            {currentWeather && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.11 }}
+              >
+                <SunriseSunset
+                  lat={selectedCity.lat}
+                  lon={selectedCity.lon}
+                  sunrise={currentWeather.sunrise}
+                  sunset={currentWeather.sunset}
+                  theme={theme}
+                />
+              </motion.div>
+            )}
+
+            {/* Activity Recommendations */}
+            {currentWeather && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.12 }}
+              >
+                <ActivityRecommendations weather={currentWeather} theme={theme} />
+              </motion.div>
+            )}
+
+            {/* Pollen Forecast */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.13 }}
+            >
+              <PollenForecast 
+                lat={selectedCity.lat}
+                lon={selectedCity.lon}
+                theme={theme}
+              />
+            </motion.div>
+
+            {/* Radar Replay */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.14 }}
+            >
+              <RadarReplay 
+                lat={selectedCity.lat}
+                lon={selectedCity.lon}
+                theme={theme}
+              />
+            </motion.div>
 
             {/* Radar Map */}
             <motion.div
