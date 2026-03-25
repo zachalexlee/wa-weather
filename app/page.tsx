@@ -13,6 +13,8 @@ import WeatherAlerts from '@/components/WeatherAlerts';
 import CitySearch from '@/components/CitySearch';
 import WeatherSummary from '@/components/WeatherSummary';
 import WeatherWidgets from '@/components/WeatherWidgets';
+import WeatherGraphs from '@/components/WeatherGraphs';
+import { getWeatherBackground, isNightTime } from '@/lib/weather-backgrounds';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -101,10 +103,21 @@ export default function Home() {
     fetchWeather();
   }, [selectedCity]);
 
-  const bgClass = theme === 'dark'
-    ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900'
-    : 'bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300';
+  // Dynamic background based on weather
+  const weatherBg = currentWeather 
+    ? getWeatherBackground(
+        currentWeather.description,
+        theme,
+        isNightTime(currentWeather.sunrise, currentWeather.sunset)
+      )
+    : {
+        gradient: theme === 'dark'
+          ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900'
+          : 'bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300',
+        description: ''
+      };
 
+  const bgClass = weatherBg.gradient;
   const headerBg = theme === 'dark' ? 'bg-black/20' : 'bg-white/90';
   const textPrimary = theme === 'dark' ? 'text-white' : 'text-blue-900';
   const textSecondary = theme === 'dark' ? 'text-blue-200' : 'text-blue-700';
@@ -299,6 +312,21 @@ export default function Home() {
                   </h2>
                   <ForecastList forecast={forecast} theme={theme} />
                 </div>
+              </motion.div>
+            )}
+
+            {/* Weather Graphs */}
+            {(hourlyForecast || forecast) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+              >
+                <WeatherGraphs 
+                  hourly={hourlyForecast || undefined}
+                  daily={forecast || undefined}
+                  theme={theme}
+                />
               </motion.div>
             )}
           </div>
