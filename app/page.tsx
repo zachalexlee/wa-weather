@@ -18,6 +18,8 @@ import { getWeatherBackground, isNightTime } from '@/lib/weather-backgrounds';
 import WildfireSmoke from '@/components/WildfireSmoke';
 import MountainPasses from '@/components/MountainPasses';
 import PugetSoundMarine from '@/components/PugetSoundMarine';
+import NotificationSettings from '@/components/NotificationSettings';
+import YesterdayComparison from '@/components/YesterdayComparison';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -28,6 +30,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [favoriteCities, setFavoriteCities] = useState<string[]>([]);
   const [detectingLocation, setDetectingLocation] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -155,6 +158,19 @@ export default function Home() {
                 {theme === 'dark' ? '☀️' : '🌙'}
               </button>
 
+              {/* Notifications Button */}
+              <button
+                onClick={() => setShowNotificationSettings(true)}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  theme === 'dark'
+                    ? 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+                title="Notification settings"
+              >
+                🔔
+              </button>
+
               {/* Geolocation Button */}
               <button
                 onClick={detectLocation}
@@ -234,6 +250,24 @@ export default function Home() {
                   current={currentWeather}
                   hourly={hourlyForecast}
                   cityName={selectedCity.name}
+                  theme={theme}
+                />
+              </motion.div>
+            )}
+
+            {/* Yesterday vs Today Comparison */}
+            {currentWeather && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.07 }}
+              >
+                <YesterdayComparison
+                  currentTemp={currentWeather.temp}
+                  currentHigh={currentWeather.temp_max}
+                  currentLow={currentWeather.temp_min}
+                  lat={selectedCity.lat}
+                  lon={selectedCity.lon}
                   theme={theme}
                 />
               </motion.div>
@@ -383,6 +417,14 @@ export default function Home() {
           </p>
         </div>
       </footer>
+
+      {/* Notification Settings Modal */}
+      {showNotificationSettings && (
+        <NotificationSettings
+          theme={theme}
+          onClose={() => setShowNotificationSettings(false)}
+        />
+      )}
     </div>
   );
 }
