@@ -12,6 +12,7 @@ import RadarMap from '@/components/RadarMap';
 import WeatherAlerts from '@/components/WeatherAlerts';
 import CitySearch from '@/components/CitySearch';
 import WeatherSummary from '@/components/WeatherSummary';
+import WeatherWidgets from '@/components/WeatherWidgets';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -219,6 +220,17 @@ export default function Home() {
                   cityName={selectedCity.name}
                   theme={theme}
                 />
+              </motion.div>
+            )}
+
+            {/* Weather Widgets/Mini Cards */}
+            {currentWeather && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.08 }}
+              >
+                <WeatherWidgets weather={currentWeather} theme={theme} />
               </motion.div>
             )}
 
