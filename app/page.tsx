@@ -25,6 +25,8 @@ import ImprovedHourlyForecast from '@/components/ImprovedHourlyForecast';
 import PollenForecast from '@/components/PollenForecast';
 import ActivityRecommendations from '@/components/ActivityRecommendations';
 import SunriseSunset from '@/components/SunriseSunset';
+import CustomDashboard from '@/components/CustomDashboard';
+import CommutePlanner from '@/components/CommutePlanner';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -368,6 +370,42 @@ export default function Home() {
                 theme={theme}
               />
             </motion.div>
+
+            {/* Custom Dashboard */}
+            {currentWeather && forecast && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
+              >
+                <CustomDashboard
+                  weatherData={{
+                    temperature: currentWeather.temp,
+                    feelsLike: currentWeather.feels_like,
+                    description: currentWeather.description,
+                    humidity: currentWeather.humidity,
+                    windSpeed: currentWeather.wind_speed,
+                    pressure: currentWeather.pressure,
+                  }}
+                  forecast={forecast}
+                  alerts={[]}
+                />
+              </motion.div>
+            )}
+
+            {/* Commute Planner */}
+            {hourlyForecast && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.16 }}
+              >
+                <CommutePlanner
+                  hourlyForecast={hourlyForecast}
+                  cityName={selectedCity.name}
+                />
+              </motion.div>
+            )}
 
             {/* Radar Map */}
             <motion.div
