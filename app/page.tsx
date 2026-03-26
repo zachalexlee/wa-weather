@@ -31,6 +31,15 @@ import WeatherHistory from '@/components/WeatherHistory';
 import MultiCityComparison from '@/components/MultiCityComparison';
 import CalendarExport from '@/components/CalendarExport';
 import ClothingRecommender from '@/components/ClothingRecommender';
+import VoiceControl from '@/components/VoiceControl';
+import WeatherCardGenerator from '@/components/WeatherCardGenerator';
+import OfflineMode from '@/components/OfflineMode';
+import Astronomy from '@/components/Astronomy';
+import GardenHelper from '@/components/GardenHelper';
+import PetSafety from '@/components/PetSafety';
+import SkiOptimizer from '@/components/SkiOptimizer';
+import WeatherEducation from '@/components/WeatherEducation';
+import Hyperlocal from '@/components/Hyperlocal';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -437,6 +446,60 @@ export default function Home() {
               <ClothingRecommender
                 currentWeather={currentWeather}
                 hourlyForecast={hourlyForecast}
+              />
+            )}
+
+            {/* Voice Control */}
+            <VoiceControl onVoiceCommand={(cmd) => console.log('Voice command:', cmd)} />
+
+            {/* Weather Card Generator */}
+            {currentWeather && (
+              <WeatherCardGenerator
+                currentWeather={currentWeather}
+                cityName={selectedCity.name}
+              />
+            )}
+
+            {/* Offline Mode */}
+            <OfflineMode />
+
+            {/* Astronomy */}
+            <Astronomy
+              lat={selectedCity.lat}
+              lon={selectedCity.lon}
+              cityName={selectedCity.name}
+            />
+
+            {/* Garden Helper */}
+            {currentWeather && hourlyForecast && (
+              <GardenHelper
+                currentWeather={currentWeather}
+                hourlyForecast={hourlyForecast}
+                cityName={selectedCity.name}
+              />
+            )}
+
+            {/* Pet Safety */}
+            {currentWeather && hourlyForecast && (
+              <PetSafety
+                currentWeather={currentWeather}
+                hourlyForecast={hourlyForecast}
+              />
+            )}
+
+            {/* Ski Optimizer */}
+            {currentWeather && (
+              <SkiOptimizer currentTemp={currentWeather.temp} />
+            )}
+
+            {/* Weather Education */}
+            <WeatherEducation />
+
+            {/* Hyperlocal */}
+            {currentWeather && (
+              <Hyperlocal
+                currentWeather={currentWeather}
+                cityName={selectedCity.name}
               />
             )}
 
