@@ -27,6 +27,10 @@ import ActivityRecommendations from '@/components/ActivityRecommendations';
 import SunriseSunset from '@/components/SunriseSunset';
 import CustomDashboard from '@/components/CustomDashboard';
 import CommutePlanner from '@/components/CommutePlanner';
+import WeatherHistory from '@/components/WeatherHistory';
+import MultiCityComparison from '@/components/MultiCityComparison';
+import CalendarExport from '@/components/CalendarExport';
+import ClothingRecommender from '@/components/ClothingRecommender';
 
 export default function Home() {
   const { theme, toggleTheme } = useTheme();
@@ -405,6 +409,35 @@ export default function Home() {
                   cityName={selectedCity.name}
                 />
               </motion.div>
+            )}
+
+            {/* Weather History */}
+            {currentWeather && (
+              <WeatherHistory
+                cityName={selectedCity.name}
+                lat={selectedCity.lat}
+                lon={selectedCity.lon}
+                currentTemp={currentWeather.temp}
+              />
+            )}
+
+            {/* Multi-City Comparison */}
+            <MultiCityComparison currentCity={selectedCity} />
+
+            {/* Calendar Export */}
+            {forecast && (
+              <CalendarExport
+                forecast={forecast}
+                cityName={selectedCity.name}
+              />
+            )}
+
+            {/* Clothing Recommender */}
+            {currentWeather && hourlyForecast && (
+              <ClothingRecommender
+                currentWeather={currentWeather}
+                hourlyForecast={hourlyForecast}
+              />
             )}
 
             {/* Radar Map */}
